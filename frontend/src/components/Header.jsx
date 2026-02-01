@@ -1,17 +1,52 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import useAuthStore from '../context/authStore.js';
 import '../styles/header.css';
+import { BsBoxArrowRight } from "react-icons/bs";
 
 export default function Header() {
   const { isAuthenticated, user, logout } = useAuthStore();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const userMenuRef = useRef(null);
+
+  const firstName = (() => {
+    const name = (user?.name || '').trim();
+    if (!name) return 'Account';
+    const [first] = name.split(/\s+/);
+    return first || 'Account';
+  })();
 
   const handleLogout = () => {
     logout();
+    setIsUserMenuOpen(false);
     navigate('/');
   };
+
+  useEffect(() => {
+    if (!isUserMenuOpen) return;
+
+    const onPointerDown = (event) => {
+      if (!userMenuRef.current) return;
+      if (!userMenuRef.current.contains(event.target)) {
+        setIsUserMenuOpen(false);
+      }
+    };
+
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        setIsUserMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('pointerdown', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [isUserMenuOpen]);
 
   const handleSearch = (event) => {
     event.preventDefault();
@@ -29,7 +64,7 @@ export default function Header() {
         <div className="header-content">
           <div className="header-left">
             <Link to="/" className="logo">
-              <h1>FashionHub</h1>
+              <h1>Daprique</h1>
             </Link>
           </div>
 
@@ -59,17 +94,51 @@ export default function Header() {
 
           <div className="header-actions">
             {isAuthenticated ? (
-              <div className="user-menu">
-                <span className="user-name">{user?.name}</span>
-                <Link to="/profile" className="nav-link">
-                  Profile
-                </Link>
-                <Link to="/orders" className="nav-link">
-                  Orders
-                </Link>
-                <button onClick={handleLogout} className="logout-btn">
-                  Logout
+              <div className="user-menu" ref={userMenuRef}>
+                <button
+                  type="button"
+                  className="user-menu-trigger"
+                  aria-haspopup="menu"
+                  aria-expanded={isUserMenuOpen}
+                  onClick={() => setIsUserMenuOpen((open) => !open)}
+                >
+                  <span className="user-name">Hi, {firstName}</span>
+                  <span className="user-menu-caret" aria-hidden="true">
+                    ▾
+                  </span>
                 </button>
+
+                {isUserMenuOpen && (
+                  <div className="user-menu-dropdown" role="menu">
+                    <Link
+                      to="/profile"
+                      role="menuitem"
+                      className="user-menu-item"
+                      onClick={() => setIsUserMenuOpen(false)}
+                    >
+                      Profile
+                    </Link>
+                    <Link
+                      to="/orders"
+                      role="menuitem"
+                      className="user-menu-item"
+                      onClick={() => setIsUserMenuOpen(false)}
+                    >
+                      Orders
+                    </Link>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className="user-menu-item user-menu-item-danger"
+                      onClick={handleLogout}
+                    >
+                      Logout
+                      <span className="logout-icon" aria-hidden="true">
+                        <BsBoxArrowRight />
+                      </span>
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="auth-links">

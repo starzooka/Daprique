@@ -8,11 +8,65 @@ import {
   getCurrentUser, 
   updateProfile, 
   requestEmailVerification, 
-  checkEmailVerification 
+  checkEmailVerification,
+  requestRegistrationOTP,
+  verifyRegistrationOTP,
+  resendRegistrationOTP,
+  requestLoginOTP,
+  verifyLoginOTP
 } from '../controllers/authController.js';
 import { authMiddleware } from '../middleware/auth.js';
 
 const router = express.Router();
+
+// ==================== OTP-BASED REGISTRATION ROUTES ====================
+router.post(
+  '/register/request-otp',
+  [
+    body('email').isEmail().withMessage('Valid email is required'),
+    body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
+    body('name').notEmpty().withMessage('Name is required'),
+  ],
+  requestRegistrationOTP
+);
+
+router.post(
+  '/register/verify-otp',
+  [
+    body('email').isEmail().withMessage('Valid email is required'),
+    body('otp').isLength({ min: 6, max: 6 }).withMessage('OTP must be 6 digits'),
+  ],
+  verifyRegistrationOTP
+);
+
+router.post(
+  '/register/resend-otp',
+  [
+    body('email').isEmail().withMessage('Valid email is required'),
+  ],
+  resendRegistrationOTP
+);
+
+// ==================== OTP-BASED LOGIN ROUTES ====================
+router.post(
+  '/login/request-otp',
+  [
+    body('email').isEmail().withMessage('Valid email is required'),
+    body('password').notEmpty().withMessage('Password is required'),
+  ],
+  requestLoginOTP
+);
+
+router.post(
+  '/login/verify-otp',
+  [
+    body('email').isEmail().withMessage('Valid email is required'),
+    body('otp').isLength({ min: 6, max: 6 }).withMessage('OTP must be 6 digits'),
+  ],
+  verifyLoginOTP
+);
+
+// ==================== OLD ROUTES (kept for backward compatibility) ====================
 
 // Request email verification (send verification email)
 router.post(

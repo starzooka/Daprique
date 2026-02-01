@@ -167,7 +167,7 @@ export default function ProductForm({ product, onClose }) {
 
           <div className="form-row">
             <div className="form-group">
-              <label>Price ($) *</label>
+              <label>Price (₹) *</label>
               <input
                 type="number"
                 step="0.01"
@@ -178,7 +178,7 @@ export default function ProductForm({ product, onClose }) {
             </div>
 
             <div className="form-group">
-              <label>Discount Price ($)</label>
+              <label>Discount Price (₹)</label>
               <input
                 type="number"
                 step="0.01"

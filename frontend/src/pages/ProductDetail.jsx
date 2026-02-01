@@ -10,6 +10,7 @@ export default function ProductDetail() {
   const { isAuthenticated } = useAuthStore();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [selectedSize, setSelectedSize] = useState('');
   const [selectedColor, setSelectedColor] = useState('');
   const [quantity, setQuantity] = useState(1);
@@ -25,6 +26,7 @@ export default function ProductDetail() {
       setProduct(response.data.product);
       setSelectedSize(response.data.product.sizes[0]);
       setSelectedColor(response.data.product.colors[0]);
+      setActiveImageIndex(0);
     } catch (error) {
       console.error('Error fetching product:', error);
     } finally {
@@ -69,11 +71,27 @@ export default function ProductDetail() {
         <div className="product-detail-grid">
           {/* Images */}
           <div className="product-images">
-            <img src={product.images[0]} alt={product.name} className="main-image" />
+            <div className="main-image-wrapper">
+              <img
+                src={product.images?.[activeImageIndex] || product.images?.[0]}
+                alt={product.name}
+                className="main-image"
+              />
+            </div>
             {product.images.length > 1 && (
               <div className="thumbnail-images">
                 {product.images.map((img, idx) => (
-                  <img key={idx} src={img} alt={`${product.name} ${idx}`} />
+                  <button
+                    key={img + idx}
+                    type="button"
+                    className={`thumbnail-btn ${idx === activeImageIndex ? 'active' : ''}`}
+                    onMouseEnter={() => setActiveImageIndex(idx)}
+                    onFocus={() => setActiveImageIndex(idx)}
+                    onClick={() => setActiveImageIndex(idx)}
+                    aria-label={`View image ${idx + 1}`}
+                  >
+                    <img src={img} alt={`${product.name} ${idx + 1}`} />
+                  </button>
                 ))}
               </div>
             )}

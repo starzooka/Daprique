@@ -117,7 +117,7 @@ export default function Dashboard() {
                 <td>
                   <span className="category-badge">{product.category}</span>
                 </td>
-                <td className="price">${product.price}</td>
+                <td className="price">₹{product.price}</td>
                 <td>
                   <span className={`stock-badge ${product.stock < 10 ? 'low' : ''}`}>
                     {product.stock}

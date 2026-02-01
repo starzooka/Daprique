@@ -45,6 +45,28 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+
+    // OTP-based verification/login
+    registrationOTP: {
+      type: String,
+      select: false,
+    },
+    registrationOTPExpiry: {
+      type: Date,
+      select: false,
+    },
+    loginOTP: {
+      type: String,
+      select: false,
+    },
+    loginOTPExpiry: {
+      type: Date,
+      select: false,
+    },
+    lastLogin: {
+      type: Date,
+    },
+
     emailVerificationToken: {
       type: String,
       select: false,

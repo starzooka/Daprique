@@ -2,12 +2,22 @@ import api from './axios.js';
 
 // Auth APIs
 export const authAPI = {
-  register: (data) => api.post('/auth/register', data),
-  login: (data) => api.post('/auth/login', data),
-  requestEmailVerification: (data) => api.post('/auth/request-verification', data),
-  checkEmailVerification: (data) => api.post('/auth/check-email-verification', data),
+  // OTP-based registration
+  requestRegistrationOTP: (data) => api.post('/auth/register/request-otp', data),
+  verifyRegistrationOTP: (data) => api.post('/auth/register/verify-otp', data),
+  resendRegistrationOTP: (data) => api.post('/auth/register/resend-otp', data),
+  
+  // OTP-based login
+  requestLoginOTP: (data) => api.post('/auth/login/request-otp', data),
+  verifyLoginOTP: (data) => api.post('/auth/login/verify-otp', data),
+  
+  // Other auth endpoints
   getCurrentUser: () => api.get('/auth/me'),
   updateProfile: (data) => api.put('/auth/profile', data),
+  
+  // Export api for direct use in components
+  post: (url, data) => api.post(url, data),
+  get: (url, params) => api.get(url, { params }),
 };
 
 // Product APIs
