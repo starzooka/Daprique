@@ -302,42 +302,89 @@
   border-radius: 2px;
 }
 
-.price-inputs {
-  display: flex;
-  align-items: center;
-  gap: 1.25rem;
-  margin-bottom: 1.25rem;
-}
-
-.price-input-group {
-  flex: 1;
+.price-range {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.85rem;
+  padding: 0.25rem 0 0;
+}
+
+.price-range-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.price-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  background: rgba(148, 163, 184, 0.16);
+  color: #475569;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  white-space: nowrap;
+}
+
+.price-badge.active {
+  background: rgba(14, 165, 233, 0.12);
+  color: #0369a1;
+  border-color: rgba(14, 165, 233, 0.35);
+}
+
+.price-values {
+  font-weight: 800;
+  color: var(--text);
+  font-size: 1rem;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4rem;
+}
+
+.price-dash {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.price-max-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.price-max-input-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
 }
 
 .price-input-label {
   font-size: 0.875rem;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--muted);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin: 0;
+  letter-spacing: 0.06em;
 }
 
-.price-number-input {
+.price-max-input {
+  width: 180px;
   padding: 12px 14px;
   border: 2px solid var(--border);
   border-radius: 12px;
   font-size: 1.05rem;
   background-color: var(--surface-alt);
   color: var(--text);
-  font-weight: 700;
+  font-weight: 800;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
-.price-number-input:focus {
+.price-max-input:focus {
   outline: none;
   border-color: #0ea5e9;
   box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.15), 0 4px 12px rgba(14, 165, 233, 0.2);
@@ -345,17 +392,64 @@
   transform: translateY(-1px);
 }
 
-.price-separator {
-  font-weight: 700;
-  font-size: 1.25rem;
+.price-slider {
+  padding: 0.25rem 0.1rem 0;
+}
+
+/* Shadcn/Radix slider visibility in the filter modal */
+.price-slider-ui {
+  padding: 8px 10px;
+}
+
+/* Track (direct child of the slider root) */
+.price-slider-ui > span[data-orientation='horizontal'] {
+  height: 12px;
+  border-radius: 999px;
+  background: rgba(226, 232, 240, 0.95);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+}
+
+/* Range (blue fill) */
+.price-slider-ui > span[data-orientation='horizontal'] > span {
+  background: #2563eb;
+}
+
+/* Thumb */
+.price-slider-ui [role='slider'] {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  border: 2px solid #1d4ed8;
+  background: #ffffff;
+  box-shadow: 0 10px 22px rgba(37, 99, 235, 0.22);
+}
+
+@media (max-width: 480px) {
+  .price-max-input-wrap {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .price-max-input {
+    width: 100%;
+  }
+}
+
+.price-hint {
+  margin: 0;
   color: var(--muted);
-  margin-top: 1.75rem;
+  font-size: 0.9rem;
+  line-height: 1.35;
 }
 
 .checkbox-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: 0.85rem;
+}
+
+.checkbox-grid .checkbox-label {
+  flex: 0 0 auto;
 }
 
 .checkbox-label {
@@ -438,40 +532,7 @@
   display: none;
 }
 
-.price-range {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  padding: 0.5rem 0;
-}
 
-.range-input {
-  width: 100%;
-  height: 6px;
-  accent-color: #0ea5e9;
-  cursor: pointer;
-  border-radius: 10px;
-  transition: opacity 0.2s ease;
-}
-
-.range-input:hover {
-  opacity: 0.8;
-}
-
-.range-input::-webkit-slider-thumb {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #0ea5e9, #0284c7);
-  cursor: pointer;
-  box-shadow: 0 2px 8px rgba(14, 165, 233, 0.4);
-  transition: all 0.2s ease;
-}
-
-.range-input::-webkit-slider-thumb:hover {
-  transform: scale(1.2);
-  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.5);
-}
 
 .checkbox-label span {
   font-weight: 600;

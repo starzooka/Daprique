@@ -2,15 +2,65 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { productAPI } from '../api/services.js';
 import ProductCard from '../components/ProductCard.jsx';
+import CategoryGrid from '../components/CategoryGrid.jsx';
+import { PiTShirtFill } from 'react-icons/pi';
+import { GiTrousers, GiRunningShoe, GiPerfumeBottle } from 'react-icons/gi';
+import { FaGlasses, FaRegClock, FaGem } from 'react-icons/fa';
 import '../styles/home.css';
 
 export default function Home() {
   const [carouselProducts, setCarouselProducts] = useState([]);
   const [bestSellers, setBestSellers] = useState([]);
   const [trending, setTrending] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [carouselIndex, setCarouselIndex] = useState(0);
   const navigate = useNavigate();
+
+  const HOME_CATEGORIES = [
+    {
+      value: 'tops',
+      name: 'Tops',
+      icon: PiTShirtFill,
+      colors: { from: '#60a5fa', to: '#38bdf8', glow: 'rgba(56, 189, 248, 0.45)' },
+    },
+    {
+      value: 'bottoms',
+      name: 'Bottoms',
+      icon: GiTrousers,
+      colors: { from: '#a78bfa', to: '#f472b6', glow: 'rgba(244, 114, 182, 0.40)' },
+    },
+    {
+      value: 'footwear',
+      name: 'Footwear',
+      icon: GiRunningShoe,
+      colors: { from: '#34d399', to: '#22c55e', glow: 'rgba(34, 197, 94, 0.40)' },
+    },
+    {
+      value: 'sunglasses-frames',
+      name: 'Sunglasses & Frames',
+      icon: FaGlasses,
+      colors: { from: '#fb7185', to: '#f97316', glow: 'rgba(249, 115, 22, 0.42)' },
+    },
+    {
+      value: 'watches',
+      name: 'Watches',
+      icon: FaRegClock,
+      colors: { from: '#22d3ee', to: '#0ea5e9', glow: 'rgba(14, 165, 233, 0.45)' },
+    },
+    {
+      value: 'accessories',
+      name: 'Accessories',
+      icon: FaGem,
+      colors: { from: '#fbbf24', to: '#f97316', glow: 'rgba(251, 191, 36, 0.42)' },
+    },
+    {
+      value: 'fragrances',
+      name: 'Fragrances',
+      icon: GiPerfumeBottle,
+      colors: { from: '#c084fc', to: '#818cf8', glow: 'rgba(129, 140, 248, 0.42)' },
+    },
+  ];
 
   useEffect(() => {
     fetchHomeProducts();
@@ -23,6 +73,8 @@ export default function Home() {
       setCarouselProducts(products.slice(0, 8));
       setBestSellers(products.slice(0, 6));
       setTrending(products.slice(6, 12));
+
+      setCategories(HOME_CATEGORIES);
     } catch (error) {
       console.error('Error fetching products:', error);
     } finally {
@@ -53,6 +105,13 @@ export default function Home() {
     });
   };
 
+  const handleCategoryClick = (category) => {
+    if (!category) return;
+    const value = typeof category === 'string' ? category : category?.value || category?.name;
+    if (!value) return;
+    navigate(`/products?category=${encodeURIComponent(value)}`);
+  };
+
   return (
     <div className="home">
       {/* Carousel Section */}
@@ -60,11 +119,17 @@ export default function Home() {
         <div className="container">
           <div className="section-header">
             <h2>Featured Collection</h2>
+            <p className="lede">Handpicked highlights — explore what’s trending now</p>
           </div>
 
           {!loading && carouselProducts.length > 0 && (
             <div className="carousel-container">
-              <button onClick={handleCarouselPrev} className="carousel-btn carousel-btn-prev">
+              <button
+                onClick={handleCarouselPrev}
+                className="carousel-btn carousel-btn-prev"
+                aria-label="Previous featured products"
+                type="button"
+              >
                 ❮
               </button>
               
@@ -80,7 +145,12 @@ export default function Home() {
                 </div>
               </div>
 
-              <button onClick={handleCarouselNext} className="carousel-btn carousel-btn-next">
+              <button
+                onClick={handleCarouselNext}
+                className="carousel-btn carousel-btn-next"
+                aria-label="Next featured products"
+                type="button"
+              >
                 ❯
               </button>
 
@@ -94,6 +164,25 @@ export default function Home() {
                 ))}
               </div>
             </div>
+          )}
+        </div>
+      </section>
+
+      {/* Categories Section */}
+      <section className="categories-section">
+        <div className="container">
+          <div className="section-header centered">
+            <h2>Shop by Category</h2>
+            <p className="lede">Quick picks to match your vibe</p>
+          </div>
+
+          {loading ? (
+            <p className="loading">Loading categories...</p>
+          ) : (
+            <CategoryGrid
+              categories={categories}
+              onCategoryClick={handleCategoryClick}
+            />
           )}
         </div>
       </section>

@@ -1,33 +1,82 @@
-import { useState, useEffect } from 'react';
+import { useMemo, useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { productAPI } from '../api/services.js';
 import ProductCard from '../components/ProductCard.jsx';
+import { Slider } from '../components/ui/slider.jsx';
 import '../styles/products.css';
 
 export default function Products() {
+  const [searchParams] = useSearchParams();
+
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
-  const [priceRange, setPriceRange] = useState([0, 1000]);
+
+  const PRICE_MIN_DEFAULT = 0;
+  const PRICE_MAX_DEFAULT = 10000;
+
+  const formatInr = (value) => `₹${new Intl.NumberFormat('en-IN').format(value)}`;
+  const formatMax = (value) => (value === PRICE_MAX_DEFAULT ? `${formatInr(value)}+` : formatInr(value));
+  const parseMax = (raw) => {
+    const parsed = parseInt(raw);
+    if (Number.isNaN(parsed)) return PRICE_MIN_DEFAULT;
+    return Math.min(PRICE_MAX_DEFAULT, Math.max(PRICE_MIN_DEFAULT, parsed));
+  };
+
+  const [priceMax, setPriceMax] = useState(PRICE_MAX_DEFAULT);
   const [sortBy, setSortBy] = useState('');
   const [inStock, setInStock] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [selectedSizes, setSelectedSizes] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
-  
+
   // Temporary filter states for modal
-  const [tempPriceRange, setTempPriceRange] = useState([0, 1000]);
+  const [tempPriceMax, setTempPriceMax] = useState(PRICE_MAX_DEFAULT);
   const [tempSortBy, setTempSortBy] = useState('');
   const [tempInStock, setTempInStock] = useState(false);
   const [tempSelectedCategories, setTempSelectedCategories] = useState([]);
   const [tempSelectedSizes, setTempSelectedSizes] = useState([]);
 
-  const categories = ['Tops', 'Bottoms', 'Outerwear', 'Accessories', 'Footwear'];
+  const categoryOptions = [
+    { value: 'tops', label: 'Tops' },
+    { value: 'bottoms', label: 'Bottoms' },
+    { value: 'footwear', label: 'Footwear' },
+    { value: 'sunglasses-frames', label: 'Sunglasses & Frames' },
+    { value: 'watches', label: 'Watches' },
+    { value: 'bags-trolleys', label: 'Bags & Trolleys' },
+    { value: 'jewelry', label: 'Jewelry' },
+    { value: 'fragrances', label: 'Fragrances & Perfumes' },
+    { value: 'electronics', label: 'Electronics' },
+    { value: 'accessories', label: 'Accessories' },
+  ];
   const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+
+  const resolveCategoryParam = (raw) => {
+    if (!raw) return null;
+    const value = String(raw).trim();
+    if (!value) return null;
+
+    const direct = categoryOptions.find((c) => c.value === value);
+    if (direct) return direct.value;
+
+    const lower = value.toLowerCase();
+    const byLabel = categoryOptions.find((c) => c.label.toLowerCase() === lower);
+    if (byLabel) return byLabel.value;
+
+    return null;
+  };
+
+  useEffect(() => {
+    const initialCategory = resolveCategoryParam(searchParams.get('category'));
+    if (!initialCategory) return;
+    setSelectedCategories([initialCategory]);
+    setTempSelectedCategories([initialCategory]);
+  }, [searchParams]);
 
   useEffect(() => {
     fetchProducts();
-  }, [page, sortBy, inStock]);
+  }, [page]);
 
   const fetchProducts = async () => {
     try {
@@ -46,7 +95,7 @@ export default function Products() {
   };
 
   const handleOpenFilters = () => {
-    setTempPriceRange(priceRange);
+    setTempPriceMax(priceMax);
     setTempSortBy(sortBy);
     setTempInStock(inStock);
     setTempSelectedCategories(selectedCategories);
@@ -55,7 +104,7 @@ export default function Products() {
   };
 
   const handleApplyFilters = () => {
-    setPriceRange(tempPriceRange);
+    setPriceMax(tempPriceMax);
     setSortBy(tempSortBy);
     setInStock(tempInStock);
     setSelectedCategories(tempSelectedCategories);
@@ -68,28 +117,54 @@ export default function Products() {
   };
 
   const handleResetFilters = () => {
-    setPriceRange([0, 1000]);
+    setPriceMax(PRICE_MAX_DEFAULT);
     setSortBy('');
     setInStock(false);
     setSelectedCategories([]);
     setSelectedSizes([]);
   };
 
-  const hasActiveFilters = sortBy || inStock || priceRange[0] !== 0 || priceRange[1] !== 1000 || selectedCategories.length > 0 || selectedSizes.length > 0;
+  const hasActiveFilters =
+    sortBy ||
+    inStock ||
+    priceMax !== PRICE_MAX_DEFAULT ||
+    selectedCategories.length > 0 ||
+    selectedSizes.length > 0;
 
-  const filteredProducts = products.filter((product) => {
-    const priceMatch = product.price >= priceRange[0] && product.price <= priceRange[1];
-    const stockMatch = !inStock || product.stock > 0;
-    const categoryMatch = selectedCategories.length === 0 || selectedCategories.includes(product.category);
-    const sizeMatch = selectedSizes.length === 0 || (product.sizes && product.sizes.some(size => selectedSizes.includes(size)));
-    return priceMatch && stockMatch && categoryMatch && sizeMatch;
-  }).sort((a, b) => {
-    if (sortBy === 'price-asc') return a.price - b.price;
-    if (sortBy === 'price-desc') return b.price - a.price;
-    if (sortBy === 'name-asc') return a.name.localeCompare(b.name);
-    if (sortBy === 'name-desc') return b.name.localeCompare(a.name);
-    return 0;
-  });
+  const getEffectivePrice = (product) => {
+    const basePrice = Number(product?.price);
+    const discountPrice = Number(product?.discountPrice);
+
+    if (Number.isFinite(discountPrice) && discountPrice > 0 && (!Number.isFinite(basePrice) || discountPrice < basePrice)) {
+      return discountPrice;
+    }
+
+    return Number.isFinite(basePrice) ? basePrice : 0;
+  };
+
+  const filteredProducts = useMemo(() => {
+    const isPriceFilterActive = priceMax !== PRICE_MAX_DEFAULT;
+
+    return products
+      .filter((product) => {
+        const effectivePrice = getEffectivePrice(product);
+        const priceMatch = !isPriceFilterActive || effectivePrice <= priceMax;
+        const stockMatch = !inStock || product.stock > 0;
+        const categoryMatch =
+          selectedCategories.length === 0 || selectedCategories.includes(product.category);
+        const sizeMatch =
+          selectedSizes.length === 0 ||
+          (product.sizes && product.sizes.some((size) => selectedSizes.includes(size)));
+        return priceMatch && stockMatch && categoryMatch && sizeMatch;
+      })
+      .sort((a, b) => {
+        if (sortBy === 'price-asc') return getEffectivePrice(a) - getEffectivePrice(b);
+        if (sortBy === 'price-desc') return getEffectivePrice(b) - getEffectivePrice(a);
+        if (sortBy === 'name-asc') return a.name.localeCompare(b.name);
+        if (sortBy === 'name-desc') return b.name.localeCompare(a.name);
+        return 0;
+      });
+  }, [products, priceMax, inStock, selectedCategories, selectedSizes, sortBy]);
 
   return (
     <div className="products-page">
@@ -116,7 +191,9 @@ export default function Products() {
             <div className="filter-modal">
               <div className="filter-modal-header">
                 <h3>Filters & Sort</h3>
-                <button onClick={handleDiscardFilters} className="close-btn">✕</button>
+                <button onClick={handleDiscardFilters} className="close-btn">
+                  ✕
+                </button>
               </div>
 
               <div className="filter-modal-body">
@@ -137,74 +214,77 @@ export default function Products() {
 
                 <div className="filter-group">
                   <label>Price Range</label>
-                  <div className="price-inputs">
-                    <div className="price-input-group">
-                      <label className="price-input-label">Min</label>
-                      <input
-                        type="number"
-                        min="0"
-                        max={tempPriceRange[1]}
-                        value={tempPriceRange[0]}
-                        onChange={(e) => {
-                          const val = Math.max(0, Math.min(parseInt(e.target.value) || 0, tempPriceRange[1]));
-                          setTempPriceRange([val, tempPriceRange[1]]);
-                        }}
-                        className="price-number-input"
-                      />
-                    </div>
-                    <span className="price-separator">-</span>
-                    <div className="price-input-group">
-                      <label className="price-input-label">Max</label>
-                      <input
-                        type="number"
-                        min={tempPriceRange[0]}
-                        max="10000"
-                        value={tempPriceRange[1]}
-                        onChange={(e) => {
-                          const val = Math.max(tempPriceRange[0], parseInt(e.target.value) || 0);
-                          setTempPriceRange([tempPriceRange[0], val]);
-                        }}
-                        className="price-number-input"
-                      />
-                    </div>
-                  </div>
-                  <div className="price-range">
-                    <input
-                      type="range"
-                      min="0"
-                      max="1000"
-                      value={tempPriceRange[0]}
-                      onChange={(e) => setTempPriceRange([parseInt(e.target.value), Math.max(parseInt(e.target.value), tempPriceRange[1])])}
-                      className="range-input"
-                    />
-                    <input
-                      type="range"
-                      min="0"
-                      max="1000"
-                      value={tempPriceRange[1]}
-                      onChange={(e) => setTempPriceRange([Math.min(tempPriceRange[0], parseInt(e.target.value)), parseInt(e.target.value)])}
-                      className="range-input"
-                    />
-                  </div>
+                  {(() => {
+                    const isTempPriceFilterActive = tempPriceMax !== PRICE_MAX_DEFAULT;
+
+                    return (
+                      <div className="price-range">
+                        <div className="price-range-top">
+                          <span className={`price-badge ${isTempPriceFilterActive ? 'active' : ''}`}>
+                            {isTempPriceFilterActive ? 'Applied' : 'Default'}
+                          </span>
+                          <div className="price-values">
+                            <span>Up to</span>
+                            <span>{formatMax(tempPriceMax)}</span>
+                          </div>
+                        </div>
+
+                        <div className="price-max-controls">
+                          <div className="price-max-input-wrap">
+                            <label className="price-input-label" htmlFor="price-max-input">
+                              Max
+                            </label>
+                            <input
+                              id="price-max-input"
+                              type="number"
+                              min={PRICE_MIN_DEFAULT}
+                              max={PRICE_MAX_DEFAULT}
+                              value={tempPriceMax}
+                              onChange={(e) => setTempPriceMax(parseMax(e.target.value))}
+                              className="price-max-input"
+                            />
+                          </div>
+
+                          <div className="price-slider">
+                            <Slider
+                              className="price-slider-ui"
+                              value={[tempPriceMax]}
+                              min={PRICE_MIN_DEFAULT}
+                              max={PRICE_MAX_DEFAULT}
+                              step={50}
+                              onValueChange={(value) => setTempPriceMax(parseMax(value?.[0]))}
+                              aria-label="Maximum price"
+                            />
+                          </div>
+                        </div>
+
+                        <p className="price-hint">
+                          Default is {formatMax(PRICE_MAX_DEFAULT)} (no price filtering) — lower the max price to apply a filter.
+                        </p>
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 <div className="filter-group">
                   <label>Categories</label>
                   <div className="checkbox-grid">
-                    {categories.map((category) => (
-                      <label key={category} className="checkbox-label">
+                    {categoryOptions.map((category) => (
+                      <label key={category.value} className="checkbox-label">
                         <input
                           type="checkbox"
-                          checked={tempSelectedCategories.includes(category)}
+                          checked={tempSelectedCategories.includes(category.value)}
                           onChange={(e) => {
                             if (e.target.checked) {
-                              setTempSelectedCategories([...tempSelectedCategories, category]);
+                              setTempSelectedCategories([...tempSelectedCategories, category.value]);
                             } else {
-                              setTempSelectedCategories(tempSelectedCategories.filter(c => c !== category));
+                              setTempSelectedCategories(
+                                tempSelectedCategories.filter((c) => c !== category.value)
+                              );
                             }
                           }}
                         />
-                        <span>{category}</span>
+                        <span>{category.label}</span>
                       </label>
                     ))}
                   </div>

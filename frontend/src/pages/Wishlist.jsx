@@ -1,17 +1,22 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useAuthStore from '../context/authStore.js';
+import useWishlistStore from '../context/wishlistStore.js';
+import ProductCard from '../components/ProductCard.jsx';
 import '../styles/products.css';
 
 export default function Wishlist() {
-  const [wishlistItems] = useState([]);
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  const ensureForUser = useWishlistStore((state) => state.ensureForUser);
+  const wishlistItems = useWishlistStore((state) => state.items);
 
   useEffect(() => {
     if (!user) {
       navigate('/login');
+      return;
     }
+    ensureForUser(user);
   }, [user, navigate]);
 
   return (
@@ -37,7 +42,9 @@ export default function Wishlist() {
           </div>
         ) : wishlistItems.length > 0 ? (
           <div className="products-grid">
-            {/* Wishlist items will be displayed here */}
+            {wishlistItems.map((product) => (
+              <ProductCard key={product._id} product={product} />
+            ))}
           </div>
         ) : (
           <div className="no-products">
